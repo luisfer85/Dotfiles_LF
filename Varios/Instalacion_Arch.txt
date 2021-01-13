@@ -1,0 +1,188 @@
+# Preparar instalación
+
+loadkeys es
+ping archlinux.org # Comprobar conexión a internet
+timedatectl set-ntp true
+
+# Crear y formatear particiones
+
+cfdisk  # Para particionar desde terminal
+mkfs.ext2 /dev/sda1
+mkfs.ext4 /dev/sda2
+mkswap /dev/sda3
+swapon /dev/sda3
+mount /dev/sda2 /mnt
+mkdir /mnt/boot
+mount /dev/sda1 /mnt/boot
+
+# Instalar sistema
+
+pacstrap /mnt base linux linux-firmware neovim grub networkmanager dhcpcd xterm netctl wpa_supplicant dialog
+genfstab -U /mnt >> /mnt/etc/fstab
+
+# Configurar sistema
+
+arch-chroot /mnt
+ln -sf /usr/share/zoneinfo/Europe/Madrid /etc/localtime
+hwclock --systohc
+nvim /etc/locale.gen  # Buscar en_US.UTF-8 UTF-8 y es_ES.UTF-8 UTF-8
+locale-gen
+echo "LANG=es_ES.UTF-8" > /etc/locale.conf
+echo "KEYMAP=es" > /etc/vconsole.conf  # O usar nano
+echo "minilf" > /etc/hostname  # O usar nano
+nvim /etc/hosts  # Escribir lo que pone en la guía
+passwd  # Assignar contraseña al root
+systemctl enable NetworkManager
+grub-install /dev/sda
+grub-mkconfig -o /boot/grub/grub.cfg
+useradd -m lfgalcaraz
+passwd lfgalcaraz# Assignar contraseña al usuario
+pacman -S sudo
+usermod -aG wheel,audio,video,storage lfgalcaraz
+nvim /etc/sudoers  # Descomentar wheel
+exit
+umount -R /mnt
+reboot
+
+#Instalar graficos
+
+sudo pacman -Syu
+sudo pacman -S xf86-video-intel intel-ucode
+sudo pacman -S xorg xorg-server xorg-xinit mesa mesa-demos
+
+#Instalar yay
+
+sudo pacman -S git
+sudo pacman -S base-devel
+sudo git clone https://aur.archlinux.org/yay-git.git
+sudo chown -R lfgalcaraz:lfgalcaraz yay-git
+cd yay-git (se puede borrar despues del makepkg)
+makepkg -si
+
+#Instalar entorno grafico
+
+#####sudo pacman -S xfce4 xfce4-goodies network-manager-applet pulseaudio
+sudo pacman -S qtile
+sudo pacman -S lightdm lightdm-gtk-greeter
+sudo systemctl enable lightdm
+reboot
+
+#Configuracion qtile
+
+setxkbmap es
+sudo pacman -S code
+code .config/qtile #Carpeta de configuracion de Qtile
+sudo pacman -S rofi
+sudo pacman -S sed which
+rofi-theme-selector
+yay -S microsoft-edge-dev
+sudo pacman -S feh #Fondos de pantalla
+sudo pacman -S pulseaudio #Audio
+sudo pacman -S pavucontrol #Programa grafico para audio
+sudo pacman -S pactl #Botones volumen y brillo del teclado
+sudo pacman -S brightnessctl #Control de brillo para botones de teclado
+Crear y configurar .xsession en mi carpeta personal
+chmod u+x .xsession
+sudo pacman -S picom #Para transparencias
+sudo pacman -S neofetch htop
+sudo pacman -S binutils
+yay -S nerd-fonts-ubuntu-mono
+sudo pacman -S ttf-dejavu ttf-liberation noto-fonts
+sudo pacman -S volumeicon
+sudo pacman -S udisks2 #Automontado de unidades externas
+sudo pacman -S udiskie #Icono de udisks2
+sudo pacman -S ntfs-3g
+sudo pacman -S arandr #Configuracion grafica de pantallas
+sudo pacman -S scrot #Captura de pantalla desde terminal
+sudo pacman -S thunar
+#sudo pacman -S ranger
+sudo pacman -S unzip
+sudo pacman -S lxappearance #Gestor grafico de temas
+sudo pacman -S network-manager-applet #Barra de red nm-applet
+sudo pacman -S cbatticon #Barra de bateria
+sudo pacman -S notification-daemon #Barra de notificaciones
+sudo pacman -S libnotify #Barra de notificaciones
+
+Crear y configurar el archivo /usr/share/dbus-1/services/org.freedesktop.Notifications.service como nos dicen aqui:
+https://wiki.archlinux.org/index.php/Desktop_notifications#Libnotify
+
+sudo pacman -S python-pip
+sudo pacman -S gcc
+pip install psutil #Para mostrar velocidad de conexion en Barra
+
+sudo pacman -S pacman-contrib #Para que muestre las actualizaciones en Barra
+
+sudo pacman -S exa #Mejor que ls
+sudo pacman -S ccat
+
+
+
+###VARIOS###
+REPO GIT: https://github.com/antoniosarosi/dotfiles.git
+git clone https://github.com/antoniosarosi/dotfiles.git
+cd dotfiles
+git checkout 1fc544d
+git pull
+
+pacman -Rnsc paquete (borra paquete, archivos de configuracion y sus dependencias no usadas actualmente)
+
+Modificar xterm creando el archivo Xresources en mi carpeta y añadiendo:
+    XTerm*colorMode: on
+    XTerm*background: #000000
+    XTerm*foreground: #AfAfAf
+    XTerm*faceName: UbuntuMono Nerd Font
+    XTerm*faceSize: 10
+
+Para buscar iconos con nerd fonts: https://www.nerdfonts.com/cheat-sheet
+
+Logs de Qtile: .local/share/qtile/qtile.log
+
+En .xsession meter:
+picom &
+setxkbmap es &
+feh --bg-scale fondos/wallpaper.jpg &
+
+Para configurar segundo monitor
+xrandr --output LVDS1 --primary --mode 1024x600 --output HDMI-1 --mode 1024x768
+O utilizar arandr
+
+Instalar temas gtk
+Descargar Material-Black-Blueberry y sus iconos suru por ejemplo
+Descomprimirlos
+Mover carpeta de tema en la ruta /usr/share/themes/
+Mover carpeta de iconos en la ruta /usr/share/icons/
+Configurar archivo .gtkrc-2.0 y el settings.ini de ./config/gtk-3.0 o utilizar lxappearance
+
+Instalar tema cursor de raton
+sudo pacman -S xcb-util-cursor #Para utilizar temas de cursor de raton
+Descargar breeze cursor theme
+Descomprimirlo con tar -
+Mover carpeta a la ruta /usr/share/icons/
+Configurar con lxappearance
+
+yay -Qe #Lista los paquetes instalados
+
+Se pueden ver imagenes con feh o se puede instalar uno de estos paquetes:
+sudo pacman -S imv #Visor de imagen simple
+sudo pacman -S geeqie #Visor de imagen bueno
+
+Cambiar temas con el script del tio:
+Elegir tema en .theme/theme.json
+cd .theme
+./set-themes.py qtile
+
+Cambiar tema lightdm
+sudo pacman -S lightdm-webkit2-greeter
+Modificar con sudo el archivo /etc/lightdm/lightdm.conf y poner lightdm-webkit2-greeter en la linea greeter-session
+
+Cambiar el prompt
+Entrar el pagina que tenemos en .bashrc y copiar el contenido en el archivo .git-prompt.sh con permisos 755
+
+Rofi con iconos
+git clone https://github.com/davatorium/rofi-themes
+cd rofi-themes
+cd User\ Themes/
+sudo cp onedark.rasi /usr/share/rofi/themes/
+sudo pacman -S papirus-icon-theme
+borramos la linea font: "Knack Nerd Font 14"; del archivo /usr/share/rofi/themes/onedark.rasi
+
